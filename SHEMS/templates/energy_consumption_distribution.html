@@ -1,0 +1,60 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+{% endblock %}
+{% block title %}Energy Consumption Distribution{% endblock %}
+{% block body %}
+    <h1>Energy Consumption Distribution</h1>
+
+    <div id="main" style="width: 100%; height: 400px;"></div>
+
+    <script type="text/javascript">
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                top: '5%',
+                left: 'center'
+            },
+            series: [
+                {
+                    name: 'Energy Consumption',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '18',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: []
+                }
+            ]
+        };
+
+        // Parse the data passed from Flask
+        var labels = {{ labels | tojson | safe }};
+        var values = {{ values | tojson | safe }};
+        
+        // Create data objects for ECharts
+        for (var i = 0; i < labels.length; i++) {
+            option.series[0].data.push({ value: values[i], name: labels[i] });
+        }
+
+        myChart.setOption(option);
+    </script>
+{% endblock %}
+

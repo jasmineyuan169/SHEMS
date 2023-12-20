@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SHEMS Login</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename="bootstrap/bootstrap@4.6.min.css") }}">
+    <link rel="stylesheet" href="{{ url_for('static',filename="css/init.css") }}">
+</head>
+<body>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item active" aria-current="page">Login</li>
+  </ol>
+</nav>
+<div class="container">
+  <div class="row mt-10">
+      <div class="col"></div>
+      <div class="col">
+            <form action="{{ login }}" method="POST">
+                <div class="form-group">
+                    <label for="exampleInputUsername1">Username</label>
+                    <input class="form-control" type="text" placeholder="username" name="name">
+                </div>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">Password</label>
+                    <input type="password" class="form-control" id="exampleInputPassword1" placeholder="password" name="password">
+                </div>
+                {% for message in get_flashed_messages() %}
+                    <div class="form-group">
+                    <div class="text-danger">{{ message }}</div>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    <a class="btn btn-primary btn-block" href={{ url_for("register") }}>Register</a>
+                </div>
+
+          </form>
+    </div>
+    <div class="col"></div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+{% endblock %}
+{% block title %}Daily Usage{% endblock %}
+{% block body %}
+    <h1>Daily Energy Consumption</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div id="main" style="width: 600px;height:400px;"></div>
+
+    <script type="text/javascript">
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        option = {
+            color: ['#3398DB'],
+            title: {
+                text:'Daily Consumption'
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: {{ datalist | tojson }}
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                data: {{ consumptionlist | tojson }},
+                type: 'bar',
+                barWidth: '60%',
+            }]
+        };
+
+        myChart.setOption(option);
+    </script>
+{% endblock %}

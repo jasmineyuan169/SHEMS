@@ -1,0 +1,23 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+{% endblock %}
+{% block title %}Daily Usage{% endblock %}
+{% block body %}
+    <h1>Daily Energy Consumption</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+
+    <form action="/customer/daily" method="POST" >
+        <input type="date" name="start_date" placeholder="Start date">
+        <input type="date" name="end_date" placeholder="End date">
+        <input type="submit" value="Search">
+    </form>
+{% endblock %}

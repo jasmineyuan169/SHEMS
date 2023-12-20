@@ -1,0 +1,51 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <title>Device Energy Consumption Over Time</title>
+    <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+{% endblock %}
+{% block body %}
+    <h1>Device Energy Consumption Over Time</h1>
+
+    <div id="main" style="width: 100%; height: 400px;"></div>
+
+    <script type="text/javascript">
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: []
+            },
+            xAxis: {
+                type: 'category',
+                data: []
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: []
+        };
+
+        // Parse the chart data passed from the Flask route
+        var chartData = {{ chart_data | tojson | safe }};
+        for (var device in chartData) {
+            option.legend.data.push(device);
+            option.series.push({
+                name: device,
+                type: 'line',
+                data: chartData[device]['consumptions'],
+                // Use the first device's dates as the x-axis labels for simplicity
+                // Assumes all devices have entries for the same dates
+                xAxisIndex: 0
+            });
+            if (option.xAxis.data.length === 0) {
+                option.xAxis.data = chartData[device]['dates'];
+            }
+        }
+
+        myChart.setOption(option);
+    </script>
+{% endblock %}

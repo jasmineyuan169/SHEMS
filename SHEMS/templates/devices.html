@@ -1,0 +1,297 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="../static/js/vue.js"></script>
+    <script src="../static/js/element.js"></script>
+    <script src="../static/js/jQuery.3.6.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        .tableArea {
+            margin-left: 8%;
+            margin-right: 8%;
+        }
+    </style>
+{% endblock %}
+{% block title %}Devices{% endblock %}
+{% block body %}
+<div id="app">
+    <div class="tableArea">
+        <!--Modify box-->
+        <el-dialog
+        :title=dialogTitle
+        :visible.sync="editDialogVisible"
+        :before-close="handleClose"
+        width="70%">
+            <!--Element UI Form-->
+            <el-form :model="form" :rules="rules" ref="form" label-width="100px">
+                <el-form-item label="DeviceName" prop="DeviceName">
+                    <el-input v-model="form.DeviceName" placeholder="Please enter the nickname of your device."></el-input>
+                </el-form-item>
+
+                 <el-form-item label="Type" prop="Type">
+                    <el-select v-model="form.Type" placeholder="Please select the type of the device.">
+                        <el-option label="AC System" value="AC System"></el-option>
+                        <el-option label="Light" value="Light"></el-option>
+                        <el-option label="Refrigerator" value="Refrigerator"></el-option>
+                        <el-option label="Others" value="Others"></el-option>
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item label="ModelNumber" prop="ModelNumber" v-if="modelNumbersOptions[form.Type] && modelNumbersOptions[form.Type].length > 0">
+                    <el-select v-model="form.ModelNumber" placeholder="Please select a model number">
+                        <el-option v-for="model in modelNumbersOptions[form.Type]" :key="model.value" :label="model.label" :value="model.value"></el-option>
+                     </el-select>
+                </el-form-item>
+
+            </el-form>
+
+            <!--Confirm & Cancel-->
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="cancel()">Cancel</el-button>
+                <el-button type="primary" @click="submitForm('form')">Confirm</el-button>
+            </span>
+        </el-dialog>
+
+        <!--Table Template-->
+        <el-table
+        :data="tableData.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))"
+        max-height = "600"
+        border
+        style="width: 100%">
+            <!--The output of each line-->
+            <el-table-column
+            label="DeviceName"
+            width="200"
+            prop="DeviceName">
+            </el-table-column>
+            <el-table-column
+            label="Type"
+            prop="Type">
+            </el-table-column>
+            <el-table-column
+            label="ModelNumber"
+            prop="ModelNumber">
+            </el-table-column>
+            <el-table-column
+            fixed="right"
+            width="250"
+            align="center">
+                <!--Search box-->
+                <template #header>
+                    <el-button
+                    size="mini"
+                    type="primary"
+                    @click="handleAdd()">Add</el-button>
+                    <el-input
+                    v-model="search"
+                    placeholder="Enter name to search"
+                    style="width: 80%"
+                    ></el-input>
+                </template>
+                <!--Edit and Delete-->
+                <template slot-scope="scope">
+                    <el-button
+                    type="primary"
+                    @click="handleEdit(scope.row)">Edit</el-button>
+                    <el-button
+                    type="danger"
+                    @click="handleDelete(scope.row)">Delete</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+</div>
+
+<script>
+
+    new Vue({
+        el: '#app',
+        data: function() {
+            return {
+                search: '',
+                dialogTitle: '',
+                isAdd: false,
+                editDialogVisible: false,
+                rules: {
+                    DeviceName: [
+                        { required: true, message: 'Please enter the nickname of your device.', trigger: 'blur' },
+                        { min: 1, max: 50, message: 'Length between 1 to 50 characters.', trigger: 'blur' }
+                    ],
+                    Type: [
+                        { required: true, message: 'Please select the type of the device.', trigger: 'blur' }
+                    ],
+                    ModelNumber: [
+                        { required: true, message: 'Please select the model number.', trigger: 'blur' }
+                    ]
+                },
+                form: {
+                    Deviceid: 0,
+                    Locationid: '',
+                    DeviceName: '',
+                    Type: '',
+                    ModelNumber: ''
+                },
+                tableData: [],
+                modelNumbersOptions: {
+                'AC System': [{ label: 'FTXS18HVJU', value: 'FTXS18HVJU' }, { label: 'CS-E12RKUAW', value: 'CS-E12RKUAW' }],
+                'Light': [{ label: '9290012573A', value: '9290012573A' }, { label: '26792', value: '26792' },{ label: 'P-BDG-PKG1W', value: 'P-BDG-PKG1W' }],
+                'Refrigerator': [{ label: 'RF28R7201SR', value: 'RF28R7201SR' }, { label: 'LFXS26596S', value: 'LFXS26596S' },{label:'WRS325SDHZ', value:'WRS325SDHZ'}],
+                'Others': [{ label: 'Others', value: 'Others' }]
+            },
+            }
+        },
+        watch: {
+        'form.Type': function() {
+            this.form.ModelNumber = '';
+        }
+    },
+        methods: {
+            // Submit from
+            submitForm(form) {
+                this.$refs[form].validate((valid) => {
+                    if (valid) {
+                        this.editDialogVisible = false
+                        if (this.isAdd === true) {
+                            this.isAdd = false
+                            // Send the request to add a record to the database
+                            // this.tableData.push({name: this.form.name, time: this.form.time, type: this.form.type, status: this.form.status})
+                            $.ajax(
+                                {
+                                    url: "/customer/devices/add",
+                                    method: "POST",
+                                    data: {
+                                        "Locationid": this.form.Locationid,
+                                        "DeviceName": this.form.DeviceName,
+                                        "Type": this.form.Type,
+                                        "ModelNumber": this.form.ModelNumber
+                                    }
+                                }
+                            )
+                            this.$message({
+                                message: 'Successfully added!',
+                                type: 'success'
+                            })
+                            setTimeout(() => {
+                                location.reload()
+                            }, 1000)
+                        } else {
+                            $.ajax(
+                                {
+                                    url: "/customer/devices/edit",
+                                    method: "POST",
+                                    data: {
+                                        "Deviceid": this.form.Deviceid,
+                                        "DeviceName": this.form.DeviceName,
+                                        "Type": this.form.Type,
+                                        "ModelNumber": this.form.ModelNumber
+                                    }
+                                }
+                            )
+                           this.$message({
+                                message: 'Edit successfully!',
+                                type: 'success'
+                            })
+                            setTimeout(()=>{
+                                location.reload()
+                            }, 1000)
+                        }
+                    } else {
+                        return false;
+                    }
+                    });
+                },
+
+            // Close Form
+            cancel() {
+                this.$confirm('Confirm closure.')
+                .then(_ => {
+                    this.isAdd = false;
+                    this.editDialogVisible = false;
+                })
+                .catch(_ => {});
+            },
+            handleClose(done) {
+                this.$confirm('Confirm closure.')
+                .then(_ => {
+                    this.isAdd = false;
+                    done();
+                })
+                .catch(_ => {});
+            },
+            // Add
+            handleAdd () {
+
+                this.dialogTitle = 'Add'
+                this.form.Deviceid = ''
+                this.form.Locationid = ''
+                this.form.DeviceName = ''
+                this.form.Type = ''
+                this.form.ModelNumber = ''
+                this.editDialogVisible = true
+                this.isAdd = true
+            },
+            // Edit
+            handleEdit (row) {
+
+                this.dialogTitle = 'Edit'
+                this.form.Deviceid = row.Deviceid
+                this.form.Locationid=row.Locationid
+                this.form.DeviceName = row.DeviceName
+                this.form.Type = row.Type
+                this.form.ModelNumber = row.ModelNumber
+                this.editDialogVisible = true
+            },
+            // Delete
+            handleDelete (row) {
+                this.$confirm('This operation will permanently delete the item. Do you want to continue?', 'Warning', {
+                    confirmButtonText: 'Confirm',
+                    cancelButtonText: 'Cancel',
+                    type: 'warning'
+                }).then(() => {
+                    // Send a request here to let the backend delete the data
+                    $.ajax(
+                            {
+                                url:"/customer/devices/delete",
+                                method:"POST",
+                                data:{
+                                    "Deviceid":row.Deviceid
+                                }
+                            }
+                        )
+                    this.$message({
+                        type: 'success',
+                        message: 'Successfully deleted!'
+                    })
+                    setTimeout(()=>{
+                        location.reload()
+                    }, 1000)
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: 'Undeleted'
+                    })
+                })
+            },
+            getTableData () {
+                // Use ajax to get the data from the database
+                this.tableData = []
+                {% for device in devices %}
+                    this.tableData.push({
+                    "Deviceid": {{device[1]}},
+                    "Locationid": {{device[2]}},
+                    "DeviceName": "{{ device[3] }}",
+                    "Type": "{{device[4] }}",
+                    "ModelNumber": "{{device[5]}}"
+                    })
+                {% endfor %}
+            }
+        },
+        mounted () {
+            this.getTableData()
+        }
+    })
+</script>
+{% endblock %}

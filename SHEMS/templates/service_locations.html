@@ -1,0 +1,377 @@
+{% extends "base_customer.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="../static/js/vue.js"></script>
+    <script src="../static/js/element.js"></script>
+    <script src="../static/js/jQuery.3.6.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        .tableArea {
+            margin-left: 8%;
+            margin-right: 8%;
+        }
+    </style>
+{% endblock %}
+{% block title %}Service Locations{% endblock %}
+{% block body %}
+<div id="app">
+    <div class="tableArea">
+        <!--修改框-->
+        <el-dialog
+        :title=dialogTitle
+        :visible.sync="editDialogVisible"
+        :before-close="handleClose"
+        width="70%">
+
+            <el-form :model="form" :rules="rules" ref="form" label-width="100px">
+                <el-form-item label="Address" prop="address">
+                    <el-input v-model="form.address"></el-input>
+                </el-form-item>
+                <el-form-item label="UnitNumber" prop="unitnumber">
+                    <el-input v-model="form.unitnumber"></el-input>
+                </el-form-item>
+                <el-form-item label="Zipcode" prop="code">
+                    <el-input v-model="form.code" placeholder="Please input 5 digit Zipcode"></el-input>
+                </el-form-item>
+                <el-form-item label="DateAcquired" prop="time">
+                    <el-date-picker v-model="form.time" type="date" placeholder="Please select date"></el-date-picker>
+                </el-form-item>
+                <el-form-item label="SquareFootage" prop="square">
+                    <el-input v-model.number="form.square" ></el-input>
+                </el-form-item>
+                <el-form-item label="Bedrooms" prop="bedrooms">
+                    <el-input v-model.number="form.bedrooms" placeholder="Please input the number of bedrooms"></el-input>
+                </el-form-item>
+                <el-form-item label="Occupants" prop="occupants">
+                    <el-input v-model.number="form.occupants" placeholder="Please input the number of occupants"></el-input>
+                </el-form-item>
+            </el-form>
+
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="cancel()">Cancel</el-button>
+                <el-button type="primary" @click="submitForm('form')">Confirm</el-button>
+            </span>
+        </el-dialog>
+
+
+        <el-table
+        :data="tableData.filter(data => !search || data.name.toLowerCase().includes(search.toLowerCase()))"
+        max-height = "600"
+        border
+        style="width: 100%">
+
+            <el-table-column
+            label="Address"
+            width="100"
+            prop="address">
+            </el-table-column>
+            <el-table-column
+            label="Unitnumber"
+            prop="unitnumber">
+            </el-table-column>
+            <el-table-column
+            label="Zipcode"
+            prop="code">
+            </el-table-column>
+            <el-table-column
+            label="DateAcquired"
+            prop="time">
+            </el-table-column>
+            <el-table-column
+            label="SquareFootage"
+            prop="square">
+            </el-table-column>
+            <el-table-column
+            label="Bedrooms"
+            prop="bedrooms">
+            </el-table-column>
+            <el-table-column
+            label="Occupants"
+            prop="occupants">
+            </el-table-column>
+            <el-table-column
+            label="Devices"
+            align="center"
+            width="120">
+                <template slot-scope="scope">
+                    <el-button
+                    size="small"
+                    round
+                    type="info"
+                    @click="handleCheck(scope.row)">View</el-button>
+                </template>
+            </el-table-column>
+            <el-table-column
+            fixed="right"
+            width="250"
+            align="center">
+
+                <template #header>
+                    <el-button
+                    size="mini"
+                    type="primary"
+                    @click="handleAdd()">Add</el-button>
+                    <el-input
+                    v-model="search"
+                    placeholder="Enter name to search"
+                    style="width: 80%"
+                    ></el-input>
+                </template>
+                <
+                <template slot-scope="scope">
+                    <el-button
+                    type="primary"
+                    @click="handleEdit(scope.row)">Edit</el-button>
+                    <el-button
+                    type="danger"
+                    @click="handleDelete(scope.row)">Delete</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+</div>
+
+<script>
+    var checkBedroomNumber = (rule, value, callback) => {
+        if (value === '') {
+          callback(new Error('Please enter the bedroom number.'));
+        } else if (value <=0 || value > 10) {
+          callback(new Error('Please enter a valid number of bedrooms.'));
+        } else {
+          callback();
+        }
+      };
+    var checkOccupantNumber = (rule, value, callback) => {
+        if (value === '') {
+          callback(new Error('Please enter the occupant number'));
+        } else if (value <=0 || value > 10) {
+          callback(new Error('Please enter a valid number of occupants.'));
+        } else {
+          callback();
+        }
+      };
+    new Vue({
+        el: '#app',
+        data: function() {
+            return {
+                search: '',
+                dialogTitle: '',
+                isAdd: false,
+                editDialogVisible: false,
+                rules: {
+                    address: [
+                        { required: true, message: 'Please enter the address of the service location.', trigger: 'blur' },
+                        { min: 1, max: 50, message: 'Length between 1 to 50 characters.', trigger: 'blur' }
+                    ],
+                    unitnumber: [
+                        { required: true, message: 'Please enter the unit number.', trigger: 'blur' }
+                    ],
+                    code: [
+                        { required: true, message: 'Please enter zipcode.', trigger: 'blur' },
+                        { pattern: /^[0-9]{5}$/, message: 'Invalid ZIP code format.', trigger: 'blur'}
+                    ],
+                    time: [
+                        { required: true, message: 'Please select the acquisition date.', trigger: 'blur' }
+                    ],
+                    square:[
+                        { required: true, message: 'Please enter the square footage of the property.', trigger: 'blur' }
+                    ],
+                    bedrooms: [
+                        { required: true, validator:checkBedroomNumber, trigger: 'blur' }
+                    ],
+                    occupants: [
+                        { required: true,validator:checkOccupantNumber, trigger: 'blur' }
+                    ]
+                },
+                form: {
+                    id: 0,
+                    address: '',
+                    unitnumber: '',
+                    code: '',
+                    time: '',
+                    square: '',
+                    bedrooms: '',
+                    occupants: ''
+                },
+                tableData: []
+            }
+        },
+        methods: {
+            // Submit from
+            submitForm(form) {
+                this.$refs[form].validate((valid) => {
+                    if (valid) {
+                        this.editDialogVisible = false
+                        // Formatted date
+                        let date = new Date(this.form.time);
+                        let formattedDate = date.toISOString().split('T')[0];
+                        if (this.isAdd === true) {
+                            this.isAdd = false
+                            // Send the request to add a record to the database
+
+                            //this.tableData.push({name: this.form.name, time: this.form.time, type: this.form.type, status: this.form.status})
+                            $.ajax(
+                                {
+                                    url: "/customer/service_locations/add",
+                                    method: "POST",
+                                    data: {
+                                        "address": this.form.address,
+                                        "unitnumber": this.form.unitnumber,
+                                        "code": this.form.code,
+                                        "time": formattedDate,
+                                        "square": this.form.square,
+                                        "bedrooms": this.form.bedrooms,
+                                        "occupants": this.form.occupants
+                                    }
+                                }
+                            )
+                            this.$message({
+                                message: 'Successfully added!',
+                                type: 'success'
+                            })
+                            setTimeout(() => {
+                                location.reload()
+                            }, 1000)
+                        } else {
+                            $.ajax(
+                                {
+                                    url: "/customer/service_locations/edit",
+                                    method: "POST",
+                                    data: {
+                                        "id": this.form.id,
+                                        "address": this.form.address,
+                                        "unitnumber": this.form.unitnumber,
+                                        "code": this.form.code,
+                                        "time": formattedDate,
+                                        "square": this.form.square,
+                                        "bedrooms": this.form.bedrooms,
+                                        "occupants": this.form.occupants
+                                    }
+                                }
+                            )
+                           this.$message({
+                                message: 'Edit successfully!',
+                                type: 'success'
+                            })
+                            setTimeout(()=>{
+                                location.reload()
+                            }, 1000)
+                        }
+                    } else {
+                        return false;
+                    }
+                    });
+                },
+
+
+            cancel() {
+                this.$confirm('Confirm closure.')
+                .then(_ => {
+                    this.isAdd = false;
+                    this.editDialogVisible = false;
+                })
+                .catch(_ => {});
+            },
+            handleClose(done) {
+                this.$confirm('Confirm closure.')
+                .then(_ => {
+                    this.isAdd = false;
+                    done();
+                })
+                .catch(_ => {});
+            },
+            handleCheck (row) {
+                $.ajax({
+                    url: "/customer/pre_devices",
+                    method:"POST",
+                    data: {
+                        "locationid": row.id
+                    },
+                    success: function () {
+                        window.location.href="/customer/devices";
+                    }
+                })
+            },
+            // Add
+            handleAdd () {
+                this.dialogTitle = 'Add'
+                this.form.address = ''
+                this.form.unitnumber = ''
+                this.form.code = ''
+                this.form.time = ''
+                this.form.square = ''
+                this.form.bedrooms = ''
+                this.form.occupants = ''
+                this.editDialogVisible = true
+                this.isAdd = true
+            },
+            // Edit
+            handleEdit (row) {
+                this.dialogTitle = 'Edit'
+                this.form.id = row.id
+                this.form.address=row.address
+                this.form.unitnumber = row.unitnumber
+                this.form.code = row.code
+                this.form.time = row.time
+                this.form.square = row.square
+                this.form.bedrooms = row.bedrooms
+                this.form.occupants=row.occupants
+                this.editDialogVisible = true
+            },
+            // Delete
+            handleDelete (row) {
+                this.$confirm('This operation will permanently delete the item. Do you want to continue?', 'Warning', {
+                    confirmButtonText: 'Confirm',
+                    cancelButtonText: 'Cancel',
+                    type: 'warning'
+                }).then(() => {
+                    // Send a request here to let the backend delete the data
+                    $.ajax(
+                            {
+                                url:"/customer/service_locations/delete",
+                                method:"POST",
+                                data:{
+                                    "id":row.id
+                                }
+                            }
+                        )
+                    this.$message({
+                        type: 'success',
+                        message: 'Successfully deleted!'
+                    })
+                    setTimeout(()=>{
+                        location.reload()
+                    }, 1000)
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: 'Undeleted'
+                    })
+                })
+            },
+            getTableData () {
+                // Use ajax to get the data from the database
+                this.tableData = []
+                {% for location in service_locations %}
+                    this.tableData.push({
+                    "id": {{location[0]}},
+                    "address": "{{location[2]}}",
+                    "unitnumber": {{ location[3] }},
+                    "code": "{{location[4] }}",
+                    "time": "{{location[5]}}",
+                    "square":{{ location[6] }},
+                    "bedrooms": {{ location[7] }},
+                    "occupants": {{ location[8] }}
+                    })
+                {% endfor %}
+            }
+        },
+        mounted () {
+            this.getTableData()
+        }
+    })
+</script>
+{% endblock %}
